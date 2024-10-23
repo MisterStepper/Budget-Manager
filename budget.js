@@ -1,7 +1,7 @@
 // SELECT ELEMENTS
 const balanceEl = document.querySelector(".balance .value");
 const incomeTotalEl = document.querySelector(".income-total");
-const outcomeTotalEl = document.querySelector(".outcome-total");
+const outcomeTotalEl = document.querySelector(".expenses-total"); // Updated
 const incomeEl = document.querySelector("#income");
 const expenseEl = document.querySelector("#expense");
 const allEl = document.querySelector("#all");
@@ -14,7 +14,7 @@ const expenseBtn = document.querySelector(".tab1");
 const incomeBtn = document.querySelector(".tab2");
 const allBtn = document.querySelector(".tab3");
 
-// INPUT BTS
+// INPUT BTNS
 const addExpense = document.querySelector(".add-expense");
 const expenseTitle = document.getElementById("expense-title-input");
 const expenseAmount = document.getElementById("expense-amount-input");
@@ -33,56 +33,67 @@ ENTRY_LIST = JSON.parse(localStorage.getItem("entry_list")) || [];
 updateUI();
 
 // EVENT LISTENERS
-expenseBtn.addEventListener("click", function(){
+expenseBtn.addEventListener("click", function () {
     show(expenseEl);
-    hide( [incomeEl, allEl] );
-    active( expenseBtn );
-    inactive( [incomeBtn, allBtn] );
-})
-incomeBtn.addEventListener("click", function(){
+    hide([incomeEl, allEl]);
+    active(expenseBtn);
+    inactive([incomeBtn, allBtn]);
+});
+incomeBtn.addEventListener("click", function () {
     show(incomeEl);
-    hide( [expenseEl, allEl] );
-    active( incomeBtn );
-    inactive( [expenseBtn, allBtn] );
-})
-allBtn.addEventListener("click", function(){
+    hide([expenseEl, allEl]);
+    active(incomeBtn);
+    inactive([expenseBtn, allBtn]);
+});
+allBtn.addEventListener("click", function () {
     show(allEl);
-    hide( [incomeEl, expenseEl] );
-    active( allBtn );
-    inactive( [incomeBtn, expenseBtn] );
-})
+    hide([incomeEl, expenseEl]);
+    active(allBtn);
+    inactive([incomeBtn, expenseBtn]);
+});
 
-addExpense.addEventListener("click", function(){
-    // IF ONE OF THE INPUTS IS EMPTY => EXIT
-    if(!expenseTitle.value || !expenseAmount.value ) return;
+addExpense.addEventListener("click", function () {
+    let amount = parseFloat(expenseAmount.value.trim());
 
-    // SAVE THE ENTRY TO ENTRY_LIST
+    // Ensure valid title and amount input (amount > 0)
+    if (!expenseTitle.value.trim() || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid title and a positive number for the amount.");
+        return;
+    }
+
     let expense = {
-        type : "expense",
-        title : expenseTitle.value,
-        amount : parseInt(expenseAmount.value)
-    }
-    ENTRY_LIST.push(expense);
+        type: "expense",
+        title: expenseTitle.value.trim(),
+        amount: parseFloat(amount.toFixed(2)), // Use parseFloat and ensure proper decimal handling
+        date: new Date().toLocaleDateString()
+    };
+
+    ENTRY_LIST.push(expense);  // Add to the entry list
 
     updateUI();
-    clearInput( [expenseTitle, expenseAmount] )
-})
+    clearInput([expenseTitle, expenseAmount]);
+});
 
-addIncome.addEventListener("click", function(){
-    // IF ONE OF THE INPUTS IS EMPTY => EXIT
-    if(!incomeTitle.value || !incomeAmount.value ) return;
+addIncome.addEventListener("click", function () {
+    let amount = parseFloat(incomeAmount.value.trim());
 
-    // SAVE THE ENTRY TO ENTRY_LIST
+    // Ensure valid title and amount input (amount > 0)
+    if (!incomeTitle.value.trim() || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid title and a positive number for the amount.");
+        return;
+    }
+
     let income = {
-        type : "income",
-        title : incomeTitle.value,
-        amount : parseInt(incomeAmount.value)
-    }
-    ENTRY_LIST.push(income);
+        type: "income",
+        title: incomeTitle.value.trim(),
+        amount: parseFloat(amount.toFixed(2)), // Use parseFloat for proper decimal input
+        date: new Date().toLocaleDateString()
+    };
 
+    ENTRY_LIST.push(income);
     updateUI();
-    clearInput( [incomeTitle, incomeAmount] )
-})
+    clearInput([incomeTitle, incomeAmount]);
+});
 
 incomeList.addEventListener("click", deleteOrEdit);
 expenseList.addEventListener("click", deleteOrEdit);
@@ -90,32 +101,29 @@ allList.addEventListener("click", deleteOrEdit);
 
 // HELPERS
 
-function deleteOrEdit(event){
+function deleteOrEdit(event) {
     const targetBtn = event.target;
-
     const entry = targetBtn.parentNode;
 
-    if( targetBtn.id == DELETE ){
+    if (targetBtn.id == DELETE) {
         deleteEntry(entry);
-    }else if(targetBtn.id == EDIT ){
+    } else if (targetBtn.id == EDIT) {
         editEntry(entry);
     }
 }
 
-function deleteEntry(entry){
-    ENTRY_LIST.splice( entry.id, 1);
-
+function deleteEntry(entry) {
+    ENTRY_LIST.splice(entry.id, 1);
     updateUI();
 }
 
-function editEntry(entry){
-    console.log(entry)
+function editEntry(entry) {
     let ENTRY = ENTRY_LIST[entry.id];
 
-    if(ENTRY.type == "income"){
+    if (ENTRY.type == "income") {
         incomeAmount.value = ENTRY.amount;
         incomeTitle.value = ENTRY.title;
-    }else if(ENTRY.type == "expense"){
+    } else if (ENTRY.type == "expense") {
         expenseAmount.value = ENTRY.amount;
         expenseTitle.value = ENTRY.title;
     }
@@ -123,91 +131,83 @@ function editEntry(entry){
     deleteEntry(entry);
 }
 
-function updateUI(){
+function updateUI() {
     income = calculateTotal("income", ENTRY_LIST);
     outcome = calculateTotal("expense", ENTRY_LIST);
-    balance = Math.abs(calculateBalance(income, outcome));
+    balance = calculateBalance(income, outcome);
 
-    // DETERMINE SIGN OF BALANCE
     let sign = (income >= outcome) ? "$" : "-$";
+    balanceEl.innerHTML = `<small>${sign}</small>${balance.toFixed(2)}`;  // Display with two decimal places
+    outcomeTotalEl.innerHTML = `<small>$</small>${outcome.toFixed(2)}`;  // Display with two decimal places
+    incomeTotalEl.innerHTML = `<small>$</small>${income.toFixed(2)}`;  // Display with two decimal places
 
-    // UPDATE UI
-    balanceEl.innerHTML = `<small>${sign}</small>${balance}`;
-    outcomeTotalEl.innerHTML = `<small>$</small>${outcome}`;
-    incomeTotalEl.innerHTML = `<small>$</small>${income}`;
+    clearElement([expenseList, incomeList, allList]);
 
-    clearElement( [expenseList, incomeList, allList] );
-
-    ENTRY_LIST.forEach( (entry, index) => {
-        if( entry.type == "expense" ){
-            showEntry(expenseList, entry.type, entry.title, entry.amount, index)
-        }else if( entry.type == "income" ){
-            showEntry(incomeList, entry.type, entry.title, entry.amount, index)
+    ENTRY_LIST.forEach((entry, index) => {
+        if (entry.type == "expense") {
+            showEntry(expenseList, entry.type, entry.title, entry.amount, entry.date, index)
+        } else if (entry.type == "income") {
+            showEntry(incomeList, entry.type, entry.title, entry.amount, entry.date, index)
         }
-        showEntry(allList, entry.type, entry.title, entry.amount, index)
+        showEntry(allList, entry.type, entry.title, entry.amount, entry.date, index)
     });
 
     updateChart(income, outcome);
-
     localStorage.setItem("entry_list", JSON.stringify(ENTRY_LIST));
 }
 
-function showEntry(list, type, title, amount, id){
-
-    const entry = ` <li id = "${id}" class="${type}">
-                        <div class="entry">${title}: $${amount}</div>
+function showEntry(list, type, title, amount, date, id) {
+    const entry = `<li id = "${id}" class="${type}">
+                        <div class="entry">${title}: $${amount} <small>(${date})</small></div>
                         <div id="edit"></div>
                         <div id="delete"></div>
                     </li>`;
-
     const position = "afterbegin";
-
     list.insertAdjacentHTML(position, entry);
 }
 
-function clearElement(elements){
-    elements.forEach( element => {
+function clearElement(elements) {
+    elements.forEach(element => {
         element.innerHTML = "";
-    })
+    });
 }
 
-function calculateTotal(type, list){
+function calculateTotal(type, list) {
     let sum = 0;
-
-    list.forEach( entry => {
-        if( entry.type == type ){
-            sum += entry.amount;
+    list.forEach(entry => {
+        if (entry.type == type) {
+            sum += parseFloat(entry.amount);  // Ensure the amount is parsed as float
         }
-    })
-
+    });
     return sum;
 }
 
-function calculateBalance(income, outcome){
+function calculateBalance(income, outcome) {
     return income - outcome;
 }
 
-function clearInput(inputs){
-    inputs.forEach( input => {
+function clearInput(inputs) {
+    inputs.forEach(input => {
         input.value = "";
-    })
+    });
 }
-function show(element){
+
+function show(element) {
     element.classList.remove("hide");
 }
 
-function hide( elements ){
-    elements.forEach( element => {
+function hide(elements) {
+    elements.forEach(element => {
         element.classList.add("hide");
-    })
+    });
 }
 
-function active(element){
+function active(element) {
     element.classList.add("active");
 }
 
-function inactive( elements ){
-    elements.forEach( element => {
+function inactive(elements) {
+    elements.forEach(element => {
         element.classList.remove("active");
-    })
+    });
 }
