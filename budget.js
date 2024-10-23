@@ -157,11 +157,16 @@ function updateUI() {
 }
 
 function showEntry(list, type, title, amount, date, id) {
-    const entry = `<li id = "${id}" class="${type}">
-                        <div class="entry">${title}: $${amount} <small>(${date})</small></div>
-                        <div id="edit"></div>
-                        <div id="delete"></div>
-                    </li>`;
+    const entryTypeLabel = (type === "income") ? "Income" : "Expense";
+    const entryColor = (type === "income") ? "green" : "red"; // Use colors for distinction
+
+    const entry = `<li id="${id}" class="${type}">
+                    <div class="entry" style="color: ${entryColor};">
+                        <strong>${entryTypeLabel}</strong> - ${title}: $${amount} <small>(${date})</small>
+                    </div>
+                    <div id="edit"></div>
+                    <div id="delete"></div>
+                  </li>`;
     const position = "afterbegin";
     list.insertAdjacentHTML(position, entry);
 }
